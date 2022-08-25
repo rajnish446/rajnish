@@ -17,7 +17,7 @@ node{
               returnStdout : true 
                  ).trim()
                  sh "echo 'Your docker hoat id $instanceid'"
-                  publicdns = sh (  script: 'aws ec2 describe-instances --instance-id ${instanceid} --region=ap-south-1 --query "Reservations[].Instances[].PublicDnsName" --output text ' ,
+                  publicdns = sh (  script: 'aws ec2 describe-instances --instance-id $instanceid --region=ap-south-1 --query "Reservations[].Instances[].PublicDnsName" --output text ' ,
                   returnStdout : true 
                  ).trim()
                 }
