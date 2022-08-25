@@ -3,18 +3,7 @@ parameters {
 }
 
 node{       
-        stage('creating ec2 server') {
-                withCredentials([[
-                 $class: 'AmazonWebServicesCredentialsBinding',
-                 credentialsId: 'rk17676-aws',
-                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]])   {
-            sh "aws ec2 run-instances --image-id ami-068257025f72f470d --instance-type t2.micro --key-name ec2-key --count 1 --security-group-id sg-023863df0d6ed5579 --region=ap-south-1 --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=DockerHost}]' "
-               sleep(60)
-              }
-              
-            }
+       
         stage('Preapering your host')
         {
              withCredentials([[
