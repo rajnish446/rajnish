@@ -1,0 +1,49 @@
+parameters {
+    string(name: 'server', defaultValue: 'docker', description: 'Please your host you wanted to install')
+}
+
+node{       
+        stage('creating ec2 server') {
+                withCredentials([[
+                 $class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'rk17676-aws',
+                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])   {
+            sh "aws ec2 run-instances --image-id ami-068257025f72f470d --instance-type t2.micro --key-name ec2-key --count 1 --security-group-id sg-023863df0d6ed5579 --region=ap-south-1 --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=DockerHost}]' "
+               sleep(60)
+              }
+              
+            }
+        stage('Preapering your host')
+        {
+             withCredentials([[
+                 $class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'rk17676-aws',
+                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]])   {
+           script{
+                  instanceid = sh (  script: 'aws ec2 describe-instances --region=ap-south-1 --filters Name=instance.group-id,Values=sg-023863df0d6ed5579 --query "Reservations[0].Instances[0].InstanceId" --output text' ,
+              returnStdout : true 
+                 ).trim()
+                 sh "echo 'Your docker hoat id $instanceid'"
+                  publicdns = sh (  script: 'aws ec2 describe-instances --instance-id ${instanceid} --region=ap-south-1 --query "Reservations[].Instances[].PublicDnsName" --output text ' ,
+                  returnStdout : true 
+                 ).trim()
+                }
+                if($server=='docker'){
+                sh "ssh -i /var/lib/jenkins/workspace/pipelinetest/ec2-key.pem  ubuntu@$publicdns -o StrictHostKeyChecking=no" //to add ec2 in host shsh
+                sh "scp -i /var/lib/jenkins/workspace/pipelinetest/ec2-key.pem -r /var/lib/jenkins/workspace/pipelinetest/dc  ubuntu@$publicdns:."
+                sh "ssh -i /var/lib/jenkins/workspace/pipelinetest/ec2-key.pem  ubuntu@$publicdns -o StrictHostKeyChecking=no 'sh dc' "
+                }
+                else{
+                    sh "ssh -i /var/lib/jenkins/workspace/pipelinetest/ec2-key.pem  ubuntu@$publicdns -o StrictHostKeyChecking=no" //to add ec2 in host shsh
+               sh "scp -i /var/lib/jenkins/workspace/pipelinetest/ec2-key.pem -r /var/lib/jenkins/workspace/pipelinetest/dc  ubuntu@$publicdns:."
+               sh "ssh -i /var/lib/jenkins/workspace/pipelinetest/ec2-key.pem  ubuntu@$publicdns -o StrictHostKeyChecking=no 'sh dc' "
+                }
+               
+        }
+        sh 'pwd'
+        }
+    }
